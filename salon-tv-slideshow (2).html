@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glow Hair Design · Salon Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Josefin+Sans:wght@200;300;400;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --pink:    #e8317a;
+  --pink2:   #f472a8;
+  --pink3:   #ffd6e8;
+  --dark:    #0a0a0a;
+  --text:    #ffffff;
+  --muted:   rgba(255,255,255,0.5);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--dark);
+  overflow: hidden;
+  cursor: none;
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: .5;
+}
+
+.slideshow { position: fixed; inset: 0; width: 100vw; height: 100vh; }
+
+.slide {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity 1.4s cubic-bezier(.4,0,.2,1);
+  display: flex;
+  align-items: stretch;
+}
+.slide.active { opacity: 1; }
+.slide.prev   { opacity: 0; }
+
+.slide-bg {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center top;
+  transform: scale(1.06);
+  transition: transform 8s ease-out;
+}
+.slide.active .slide-bg { transform: scale(1); }
+
+.slide-bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to right, rgba(0,0,0,.80) 0%, rgba(0,0,0,.18) 55%, rgba(0,0,0,.5) 100%),
+    linear-gradient(to top,   rgba(0,0,0,.7)  0%, transparent 45%);
+}
+
+.slide-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  padding: 48px 60px;
+}
+
+.top-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.logo-block { display: flex; flex-direction: column; gap: 10px; }
+
+.logo-img {
+  height: clamp(44px, 5.5vw, 72px);
+  width: auto;
+  max-width: 260px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.salon-name-fallback {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: clamp(24px, 3vw, 44px);
+  color: var(--text);
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  display: none;
+}
+.salon-name-fallback em { font-style: italic; color: var(--pink); }
+
+.salon-tagline {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 200;
+  font-size: clamp(9px, 1vw, 12px);
+  color: var(--muted);
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+.clock-block { text-align: right; }
+.clock {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 200;
+  font-size: clamp(26px, 3.2vw, 46px);
+  color: var(--text);
+  letter-spacing: 3px;
+}
+.date-str {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 200;
+  font-size: clamp(9px, .9vw, 12px);
+  color: var(--muted);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-align: right;
+  margin-top: 6px;
+}
+
+.bottom-area {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.caption {
+  flex: 1;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity .9s .5s ease, transform .9s .5s ease;
+}
+.slide.active .caption { opacity: 1; transform: translateY(0); }
+
+.caption-tag {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 400;
+  font-size: clamp(9px, .9vw, 12px);
+  color: var(--pink);
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 10px;
+}
+.caption-tag::before {
+  content: '';
+  display: inline-block;
+  width: 28px; height: 1px;
+  background: var(--pink);
+}
+.caption-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 4vw, 64px);
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1.05;
+}
+.caption-title em { font-style: italic; color: var(--pink2); }
+.caption-sub {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 200;
+  font-size: clamp(10px, 1.1vw, 14px);
+  color: var(--muted);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: 14px;
+}
+
+.info-panel {
+  background: rgba(232,49,122,0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(232,49,122,0.4);
+  border-radius: 16px;
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity .9s .7s ease, transform .9s .7s ease;
+  min-width: 170px;
+  text-align: center;
+}
+.slide.active .info-panel { opacity: 1; transform: translateY(0); }
+.info-label-top {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 400;
+  font-size: 9px;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: var(--pink);
+}
+.info-icon { font-size: 1.8rem; line-height: 1; }
+.info-label-btm {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 200;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.9;
+}
+.info-label-btm strong {
+  display: block;
+  color: var(--pink3);
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.progress-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: rgba(255,255,255,.06);
+  z-index: 200;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--pink);
+  width: 0%;
+  transition: width linear;
+}
+
+.dots {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 200;
+}
+.dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.25);
+  transition: all .4s;
+  cursor: pointer;
+}
+.dot.active {
+  background: var(--pink);
+  width: 24px;
+  border-radius: 2px;
+}
+
+.ticker {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 42px;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(232,49,122,.25);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  z-index: 190;
+}
+.ticker-inner {
+  display: flex;
+  gap: 80px;
+  white-space: nowrap;
+  animation: ticker 42s linear infinite;
+  padding-left: 100%;
+}
+.ticker-item {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 200;
+  font-size: 12px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.ticker-item span { color: var(--pink); margin: 0 6px; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+.services-grid {
+  position: relative; z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+  width: 100%; height: 100%;
+  background: rgba(232,49,122,.2);
+}
+.service-cell {
+  background: rgba(10,10,10,.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px;
+  text-align: center;
+}
+.service-icon { font-size: clamp(28px, 4vw, 46px); margin-bottom: 4px; }
+.service-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-size: clamp(18px, 2.2vw, 30px);
+  color: var(--text);
+  letter-spacing: 1px;
+}
+.service-price {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 300;
+  font-size: clamp(12px, 1.4vw, 20px);
+  color: var(--pink);
+  letter-spacing: 3px;
+}
+.service-desc {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 200;
+  font-size: clamp(9px, .9vw, 11px);
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.social-content {
+  position: relative; z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 20px;
+  padding: 60px;
+  text-align: center;
+}
+.social-handle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(38px, 6.5vw, 95px);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text);
+  letter-spacing: -2px;
+  line-height: 1;
+}
+.social-sub {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 200;
+  font-size: clamp(10px, 1.1vw, 14px);
+  color: var(--muted);
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+.social-icons { display: flex; gap: 20px; }
+.social-icon {
+  width: 48px; height: 48px;
+  border: 1px solid rgba(232,49,122,.5);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.pink-line {
+  width: 60px; height: 2px;
+  background: linear-gradient(to right, var(--pink), var(--pink2));
+  border-radius: 2px;
+}
+</style>
+</head>
+<body>
+
+<div class="slideshow" id="slideshow">
+
+  <!-- ── SLIDE 1 ── -->
+  <div class="slide active" id="slide-0">
+    <div class="slide-bg" style="background-image:url('glow1.jpg')"></div>
+    <div class="slide-content">
+      <div class="top-bar">
+        <div class="logo-block">
+          <img class="logo-img" src="logo.jpg" alt="Glow Hair Design"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <div class="salon-name-fallback">Glow <em>Hair</em> Design</div>
+          <div class="salon-tagline">Beauty · Elegance · Confidence</div>
+        </div>
+        <div class="clock-block">
+          <div class="clock" id="clock">00:00</div>
+          <div class="date-str" id="dateStr"></div>
+        </div>
+      </div>
+      <div class="bottom-area">
+        <div class="caption">
+          <div class="caption-tag">Cape Town · Since 2004</div>
+          <div class="caption-title">Where every client<br>leaves <em>luminous</em></div>
+          <div class="caption-sub">Book your appointment today</div>
+        </div>
+        <div class="info-panel">
+          <div class="info-label-top">Book Now</div>
+          <div class="info-icon">📅</div>
+          <div class="info-label-btm">
+            <strong>Glow Hair Design</strong>
+            Claremont<br>Vineyard Road<br>021 671 9497
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 2 ── -->
+  <div class="slide" id="slide-1">
+    <div class="slide-bg" style="background-image:url('glow2.jpg')"></div>
+    <div class="slide-content">
+      <div class="top-bar">
+        <div class="logo-block">
+          <img class="logo-img" src="logo.jpg" alt="Glow Hair Design"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <div class="salon-name-fallback">Glow <em>Hair</em> Design</div>
+          <div class="salon-tagline">Beauty · Elegance · Confidence</div>
+        </div>
+        <div class="clock-block">
+          <div class="clock" id="clock1">00:00</div>
+          <div class="date-str" id="dateStr1"></div>
+        </div>
+      </div>
+      <div class="bottom-area">
+        <div class="caption">
+          <div class="caption-tag">Hair Colour</div>
+          <div class="caption-title">Balayage &<br><em>highlights</em></div>
+          <div class="caption-sub">Natural · Sun-kissed · Seamless blends</div>
+        </div>
+        <div class="info-panel">
+          <div class="info-label-top">Colour Services</div>
+          <div class="info-icon">🎨</div>
+          <div class="info-label-btm">
+            <strong>From R650</strong>
+            Full colour · Roots<br>Toner · Balayage
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3: Services ── -->
+  <div class="slide" id="slide-2">
+    <div class="slide-bg" style="background-image:url('glow3.jpg');filter:brightness(.3)"></div>
+    <div class="services-grid">
+      <div class="service-cell">
+        <div class="service-icon">✂️</div>
+        <div class="service-name">Cut & Style</div>
+        <div class="service-price">From R350</div>
+        <div class="service-desc">Cut · Blow-dry · Finish</div>
+      </div>
+      <div class="service-cell">
+        <div class="service-icon">🎨</div>
+        <div class="service-name">Colour & Tint</div>
+        <div class="service-price">From R650</div>
+        <div class="service-desc">Full colour · Roots · Toner</div>
+      </div>
+      <div class="service-cell">
+        <div class="service-icon">✨</div>
+        <div class="service-name">Balayage</div>
+        <div class="service-price">From R950</div>
+        <div class="service-desc">Highlights · Balayage · Ombré</div>
+      </div>
+      <div class="service-cell">
+        <div class="service-icon">💆</div>
+        <div class="service-name">Treatments</div>
+        <div class="service-price">From R450</div>
+        <div class="service-desc">Keratin · Botox · Extensions</div>
+      </div>
+    </div>
+    <div style="position:absolute;top:36px;left:50%;transform:translateX(-50%);z-index:20;text-align:center">
+      <img class="logo-img" src="logo.jpg" alt="Glow Hair Design" style="display:block;margin:0 auto"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div class="salon-name-fallback" style="text-align:center">Glow <em>Hair</em> Design</div>
+      <div class="salon-tagline" style="text-align:center;margin-top:8px">Our Services</div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 4 ── -->
+  <div class="slide" id="slide-3">
+    <div class="slide-bg" style="background-image:url('glow4.jpg')"></div>
+    <div class="slide-content">
+      <div class="top-bar">
+        <div class="logo-block">
+          <img class="logo-img" src="logo.jpg" alt="Glow Hair Design"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <div class="salon-name-fallback">Glow <em>Hair</em> Design</div>
+          <div class="salon-tagline">Beauty · Elegance · Confidence</div>
+        </div>
+        <div class="clock-block">
+          <div class="clock" id="clock3">00:00</div>
+          <div class="date-str" id="dateStr3"></div>
+        </div>
+      </div>
+      <div class="bottom-area">
+        <div class="caption">
+          <div class="caption-tag">Styling</div>
+          <div class="caption-title">Crafted to<br><em>perfection</em></div>
+          <div class="caption-sub">Blow Wave · Flat Iron · Curls · Extensions</div>
+        </div>
+        <div class="info-panel">
+          <div class="info-label-top">Styling</div>
+          <div class="info-icon">💇</div>
+          <div class="info-label-btm">
+            <strong>Wash & Blow</strong>
+            Wash, Blow + Flat Iron<br>From R240
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 5 ── -->
+  <div class="slide" id="slide-4">
+    <div class="slide-bg" style="background-image:url('glow5.jpg')"></div>
+    <div class="slide-content">
+      <div class="top-bar">
+        <div class="logo-block">
+          <img class="logo-img" src="logo.jpg" alt="Glow Hair Design"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <div class="salon-name-fallback">Glow <em>Hair</em> Design</div>
+          <div class="salon-tagline">Beauty · Elegance · Confidence</div>
+        </div>
+        <div class="clock-block">
+          <div class="clock" id="clock4">00:00</div>
+          <div class="date-str" id="dateStr4"></div>
+        </div>
+      </div>
+      <div class="bottom-area">
+        <div class="caption">
+          <div class="caption-tag">Treatments</div>
+          <div class="caption-title">Indulge in<br><em>pure luxury</em></div>
+          <div class="caption-sub">Mycro Keratin · Botox · Hair Care</div>
+        </div>
+        <div class="info-panel">
+          <div class="info-label-top">Hair Care</div>
+          <div class="info-icon">✨</div>
+          <div class="info-label-btm">
+            <strong>Transformative</strong>
+            Premium treatments<br>for every hair type
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 6: Social ── -->
+  <div class="slide" id="slide-5">
+    <div class="slide-bg" style="background-image:url('glow2.jpg');filter:brightness(.35) saturate(1.3)"></div>
+    <div class="slide-content" style="justify-content:center;align-items:center;">
+      <div class="social-content">
+        <img class="logo-img" src="logo.jpg" alt="Glow Hair Design"
+          style="height:clamp(56px,7vw,90px);max-width:300px"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="salon-name-fallback" style="text-align:center">Glow <em>Hair</em> Design</div>
+        <div class="pink-line"></div>
+        <div class="salon-tagline" style="letter-spacing:8px">Follow us on Instagram</div>
+        <div class="social-handle">@glow_hairdesign</div>
+        <div class="social-sub">Tag us in your looks for a chance to be featured</div>
+        <div class="social-icons">
+          <div class="social-icon">📸</div>
+          <div class="social-icon">📱</div>
+          <div class="social-icon">🌐</div>
+        </div>
+        <div class="salon-tagline" style="margin-top:4px">Book online · glowhairdesign.co.za</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Ticker -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item">✂️ Cut &amp; Style <span>·</span> From R350</span>
+    <span class="ticker-item">🎨 Full Colour <span>·</span> From R650</span>
+    <span class="ticker-item">✨ Balayage &amp; Highlights <span>·</span> From R950</span>
+    <span class="ticker-item">💇 Wash, Blow + Flat Iron <span>·</span> From R240</span>
+    <span class="ticker-item">💆 Mycro Keratin &amp; Botox Treatments</span>
+    <span class="ticker-item">📍 Claremont <span>·</span> Vineyard Road <span>·</span> 021 671 9497</span>
+    <span class="ticker-item">📱 Follow <span>@glow_hairdesign</span> on Instagram</span>
+    <span class="ticker-item">🌐 Book online <span>glowhairdesign.co.za</span></span>
+    <span class="ticker-item">✂️ Cut &amp; Style <span>·</span> From R350</span>
+    <span class="ticker-item">🎨 Full Colour <span>·</span> From R650</span>
+    <span class="ticker-item">✨ Balayage &amp; Highlights <span>·</span> From R950</span>
+    <span class="ticker-item">💇 Wash, Blow + Flat Iron <span>·</span> From R240</span>
+    <span class="ticker-item">💆 Mycro Keratin &amp; Botox Treatments</span>
+    <span class="ticker-item">📍 Claremont <span>·</span> Vineyard Road <span>·</span> 021 671 9497</span>
+    <span class="ticker-item">📱 Follow <span>@glow_hairdesign</span> on Instagram</span>
+    <span class="ticker-item">🌐 Book online <span>glowhairdesign.co.za</span></span>
+  </div>
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="dots" id="dots"></div>
+
+<script>
+const SLIDES = 6, DURATION = 8000;
+let current = 0, timer = null;
+
+function updateClock() {
+  const now = new Date();
+  const t = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const d = days[now.getDay()] + ' · ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  ['clock','clock1','clock3','clock4'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = t; });
+  ['dateStr','dateStr1','dateStr3','dateStr4'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = d; });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+const dotsEl = document.getElementById('dots');
+for (let i = 0; i < SLIDES; i++) {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+
+function startProgress() {
+  const f = document.getElementById('progressFill');
+  f.style.transition = 'none'; f.style.width = '0%';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    f.style.transition = `width ${DURATION}ms linear`; f.style.width = '100%';
+  }));
+}
+
+function goTo(idx) {
+  const slides = document.querySelectorAll('.slide');
+  slides[current].classList.remove('active'); slides[current].classList.add('prev');
+  setTimeout(() => slides[current].classList.remove('prev'), 1600);
+  current = idx;
+  slides[current].classList.add('active');
+  document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i === idx));
+  startProgress();
+  clearTimeout(timer); timer = setTimeout(next, DURATION);
+}
+function next() { goTo((current + 1) % SLIDES); }
+
+startProgress();
+timer = setTimeout(next, DURATION);
+
+document.addEventListener('keydown', e => {
+  if (e.key==='ArrowRight'||e.key===' ') next();
+  if (e.key==='ArrowLeft') goTo((current-1+SLIDES)%SLIDES);
+});
+let tx = 0;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) dx < 0 ? next() : goTo((current-1+SLIDES)%SLIDES);
+});
+</script>
+</body>
+</html>
